@@ -1,0 +1,20 @@
+// This is a comment
+
+/section #hero
+
+  # Miniware is a company that designs companies.
+
+/section #services
+
+  /ul.grid
+    /li .item
+      ### Everything is connected
+
+      Your business is a system, run by an orchestra of people and tools.
+
+      The default is ever-increasing complexity.
+
+      Communication overhead grows, iteration slows, and course correction is impeded by your inertia.
+
+    /li
+      ### Work smarter not harder.
