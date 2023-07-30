@@ -26,6 +26,9 @@
 
     And this will render as a paragraph too.
 
+    // Boolean attributes are supported too!
+    /input type="text" placeholder="Enter your name" autofocus
+
     // An empty tag will be rendered as a <div> tag.
     // And items on the immediate next line after a tag, if indented, will be parsed as attributes.
 
@@ -35,5 +38,5 @@
 
     Made with ❤️ by slashdown.
 
-    // You can use `=` with the last item in a block, rendering the rest as a literal text child.
-    /a href="https://miniware.team" target="_blank" = Made by Miniware
+    /a href="https://miniware.team" target="_blank"
+      Made by Miniware

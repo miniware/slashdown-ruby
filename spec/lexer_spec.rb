@@ -1,49 +1,115 @@
+require "spec_helper"
 require "lexer"
-require "token"
 
 RSpec.describe Lexer do
-  def expect_tokens(tokens, expected)
-    tokens.each_with_index do |token, index|
-      expect(token).to be_a Token
-      expect(token).to eq expected[index]
-    end
-  end
-  it "tokenizes a tag" do
+  it "can lex a simple tag" do
     lexer = Lexer.new("/div")
-    expected = [
-      TagToken.new("/div", 0)
+    tokens = lexer.lex
+    expect(tokens).to eq [
+      [:TAG, "/div"]
     ]
-    expect_tokens(lexer.lex, expected)
   end
 
-  it "tokenizes a tag with attributes on a new line" do
-    lexer = Lexer.new("/div\n  class='foo'")
-    expected = [
-      TagToken.new("/div class='foo'", 0)
+  it "can lex a blank tag with a class" do
+    lexer = Lexer.new("/ .my-class")
+    tokens = lexer.lex
+    expect(tokens).to eq [
+      [:TAG, "/"],
+      [:SELECTOR, ".my-class"]
     ]
-
-    expect_tokens(lexer.lex, expected)
   end
 
-  fit "tracks indents accurately" do
-    src = <<~SLASHDOWN
-      /ul
-        // This is a comment
-        /li
-          class='foo'
+  it "can lex multiple selectors" do
+    lexer = Lexer.new("/section #hero.grid")
+    tokens = lexer.lex
+    expect(tokens).to eq [
+      [:TAG, "/section"],
+      [:SELECTOR, "#hero"],
+      [:SELECTOR, ".grid"]
+    ]
+  end
 
-          this is a paragraph
+  it "can lex a tag with an attribute" do
+    lexer = Lexer.new('/div data-foo="bar baz"')
+    tokens = lexer.lex
+    expect(tokens).to eq [
+      [:TAG, "/div"],
+      [:ATTRIBUTE, 'data-foo="bar baz"']
+    ]
+  end
 
-        /li
-    SLASHDOWN
+  it "can lex a simple tag with a class and an attribute" do
+    lexer = Lexer.new('/div .my-class data-foo="bar baz"')
+    tokens = lexer.lex
+    expect(tokens).to eq [
+      [:TAG, "/div"],
+      [:SELECTOR, ".my-class"],
+      [:ATTRIBUTE, 'data-foo="bar baz"']
+    ]
+  end
+
+  it "can lex a tag with attributes on a new line" do
+    src = <<~SD
+      /div
+        data-foo="bar baz"
+
+        This is content
+    SD
+
     lexer = Lexer.new(src)
-    expected = [
-      TagToken.new("/ul", 0),
-      TagToken.new("/li class='foo'", 1),
-      MarkdownToken.new("this is a paragraph", 2),
-      TagToken.new("/li", 1)
+    tokens = lexer.lex
+    expect(tokens).to eq [
+      [:TAG, "/div"],
+      [:INDENT, nil],
+      [:ATTRIBUTE, 'data-foo="bar baz"'],
+      [:INDENT, nil],
+      [:CONTENT, "This is content"]
     ]
+  end
 
-    expect_tokens(lexer.lex, expected)
+  it "tracks indentation properly" do
+    src = <<~SD
+      /ul .list
+
+        This is content
+
+      // This is a comment which should be ignored
+        /li
+
+          This is more content
+
+        /li
+
+          This is even more content
+
+      /footer
+
+        This is outdented content
+    SD
+
+    lexer = Lexer.new(src)
+    tokens = lexer.lex
+    expect(tokens).to eq [
+      [:TAG, "/ul"],
+      [:SELECTOR, ".list"],
+
+      [:INDENT, nil],
+      [:CONTENT, "This is content"],
+
+      [:TAG, "/li"],
+      [:INDENT, nil],
+      [:CONTENT, "This is more content"],
+
+      [:DEDENT, nil],
+      [:TAG, "/li"],
+      [:INDENT, nil],
+      [:CONTENT, "This is even more content"],
+
+      [:DEDENT, nil],
+      [:DEDENT, nil],
+      [:TAG, "/footer"],
+      [:INDENT, nil],
+      [:CONTENT, "This is outdented content"],
+    ]
   end
 end
