@@ -1,5 +1,3 @@
-require_relative "token"
-
 class Lexer
   def initialize(src, indent_size = 2)
     @src = strip_comments(src)
@@ -7,8 +5,8 @@ class Lexer
   end
 
   def lex
-    tokens = []
-    factory = TokenFactory.new
+    @tokens = []
+    @current_indentation = 0
 
     # We split by double (or more) newlines (may have whitespace in between) to get the initial blocks
     blocks = @src.strip.split(/(\n\s*\n)+/)
@@ -18,10 +16,14 @@ class Lexer
     # - Catching indentation and line numbers is a bit hacky
 
     blocks.each do |block|
-      indent_level = indent_level(block)
+      if block.match?(/^\s*$/) # It's a blank line
+        @tokens << [:BLANK, nil]
+        next
+      end
+
+      track_indent(block)
 
       block = block.strip # Strip leading / trailing whitespace
-
       if block.start_with?("/") # It's a tag
         # collapse any newlined attributes etc
         block = block.split("\n").map(&:strip).join(" ")
@@ -33,24 +35,34 @@ class Lexer
         if last_item.match?(/^\#{1,6}\s+.+/)
           # It's a markdown heading
           heading = blocks.pop
-          tokens << factory.create(:MARKDOWN, heading, indent_level + 1)
+          @tokens << [:MARKDOWN, heading]
         end
         block = blocks.join(" ")
 
-        tokens << factory.create(:TAG, block, indent_level)
+        @tokens << [:TAG, block]
 
       else # handoff to Markdown
-        tokens << factory.create(:MARKDOWN, block, indent_level)
+        @tokens << [:MARKDOWN, block]
       end
     end
 
-    tokens
+    @tokens
   end
 
   private
 
-  def indent_level(line)
-    line.match(/^ */)[0].length / @indent_size
+  def track_indent(line)
+    indentation = line.match(/^ */)[0].length / @indent_size
+
+    if indentation > @current_indentation
+      @current_indentation = indentation
+      @tokens << [:INDENT, nil]
+    elsif indentation < @current_indentation
+      (@current_indentation - indentation).times do
+        @current_indentation -= 1
+        @tokens << [:DEDENT, nil]
+      end
+    end
   end
 
   def strip_comments(src)
