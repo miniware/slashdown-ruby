@@ -19,7 +19,7 @@ RSpec.describe Lexer do
     ]
   end
 
-  it "can lex multiple selectors" do
+  it "can lex multiple chained selectors" do
     lexer = Lexer.new("/section #hero.grid")
     tokens = lexer.lex
     expect(tokens).to eq [
@@ -60,28 +60,21 @@ RSpec.describe Lexer do
     tokens = lexer.lex
     expect(tokens).to eq [
       [:TAG, "/div"],
-      [:INDENT, nil],
+      [:INDENT, 1],
       [:ATTRIBUTE, 'data-foo="bar baz"'],
-      [:INDENT, nil],
-      [:CONTENT, "This is content"]
+      [:BLANK],
+      [:MARKDOWN, "This is content"]
     ]
   end
 
   it "tracks indentation properly" do
     src = <<~SD
       /ul .list
-
-        This is content
-
+        /li
       // This is a comment which should be ignored
         /li
-
-          This is more content
-
-        /li
-
-          This is even more content
-
+          data-foo="bar baz"
+          /span
       /footer
 
         This is outdented content
@@ -92,24 +85,17 @@ RSpec.describe Lexer do
     expect(tokens).to eq [
       [:TAG, "/ul"],
       [:SELECTOR, ".list"],
-
-      [:INDENT, nil],
-      [:CONTENT, "This is content"],
-
+      [:INDENT, 1],
       [:TAG, "/li"],
-      [:INDENT, nil],
-      [:CONTENT, "This is more content"],
-
-      [:DEDENT, nil],
       [:TAG, "/li"],
-      [:INDENT, nil],
-      [:CONTENT, "This is even more content"],
-
-      [:DEDENT, nil],
-      [:DEDENT, nil],
+      [:INDENT, 1],
+      [:ATTRIBUTE, 'data-foo="bar baz"'],
+      [:TAG, "/span"],
+      [:DEDENT, 2],
       [:TAG, "/footer"],
-      [:INDENT, nil],
-      [:CONTENT, "This is outdented content"],
+      [:BLANK],
+      [:INDENT, 1],
+      [:MARKDOWN, "This is outdented content"]
     ]
   end
 end
