@@ -61,7 +61,7 @@ RSpec.describe Lexer do
     expect(tokens).to eq [
       Token.new(:TAG, "div", 0),
       Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 1),
-      Token.new(:BLANK, nil, 1),
+      Token.new(:BLANK, nil, nil),
       Token.new(:MARKDOWN, "This is content", 1)
     ]
   end
@@ -89,7 +89,7 @@ RSpec.describe Lexer do
       Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 2),
       Token.new(:TAG, "span", 2),
       Token.new(:TAG, "footer", 0),
-      Token.new(:BLANK, nil, 0),
+      Token.new(:BLANK, nil, nil),
       Token.new(:MARKDOWN, "This is outdented content", 1)
     ]
   end

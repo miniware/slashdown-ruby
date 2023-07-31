@@ -26,41 +26,49 @@ class Lexer
   end
 
   def lex
-    indentation = 0
-    blank_since_last_tag = false
-
     @src.each_line do |line|
-      next if line.start_with?(/\A\s*\/\//) # skip comments
-
-      # Blank lines are important (for MD) but shouldn't affect indentation
-      if line.strip.empty?
-        @tokens << Token.new(:BLANK, nil, indentation)
-        blank_since_last_tag = true
-        next
-      end
-
-      indentation = calculate_indentation(line)
-      line = line.strip
-
-      # is it a tag?
-      if line.start_with?("/")
-        blank_since_last_tag = false
-        process_tag_contents(line, indentation)
-
-      # what about an attribute?
-      elsif is_attribute?(line) && !blank_since_last_tag
-        @tokens << Token.new(:ATTRIBUTE, line, indentation)
-
-      # let's just call it markdown...
-      else
-        @tokens << Token.new(:MARKDOWN, line, indentation)
-      end
+      process_line(line)
     end
 
     @tokens
   end
 
   private
+
+  def process_line(line)
+    return if comment_line?(line)
+
+    if blank_line?(line)
+      handle_blank_line
+    else
+      handle_non_blank_line(line)
+    end
+  end
+
+  def comment_line?(line)
+    line.start_with?(/\A\s*\/\//)
+  end
+
+  def blank_line?(line)
+    line.strip.empty?
+  end
+
+  def handle_blank_line
+    @tokens << Token.new(:BLANK, nil, nil)
+  end
+
+  def handle_non_blank_line(line)
+    indentation = calculate_indentation(line)
+    line = line.strip
+
+    if line.start_with?("/")
+      process_tag_contents(line, indentation)
+    elsif is_attribute?(line)
+      @tokens << Token.new(:ATTRIBUTE, line, indentation)
+    else
+      @tokens << Token.new(:MARKDOWN, line, indentation)
+    end
+  end
 
   def is_attribute? line
     pattern = @patterns.find { |type, _| type == :ATTRIBUTE }.last
