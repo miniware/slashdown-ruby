@@ -8,10 +8,15 @@ class Lexer
     @tokens = []
     @current_indentation = 0
 
+    # Patterns to match
+    # Each of these will be tried in order until one matches
+    # Anything that falls through will be treated as markdown
+    # Each pattern has a capture group which will be used as the value
     patterns = [
-      [:TAG, /\/[\w-]*/],
-      [:SELECTOR, /[.#][\w-]+/],
-      [:ATTRIBUTE, /[\w-]+="[^"]*"/]
+      [:TAG, /\/([\w-]*)/],
+      [:SELECTOR, /([.#][\w-]+)/],
+      [:ATTRIBUTE, /([\w-]+="[^"]*")/],
+      [:TEXT, /=\s+(.+)$/]
     ]
 
     blank_since_last_tag = false
@@ -31,39 +36,39 @@ class Lexer
       track_indent(line)
       line = line.strip
 
-      # Tags
+      # Start a tag
       if line.start_with?("/")
-        remainder = line.dup
         blank_since_last_tag = false
 
+        # look for patterns until we've consumed the whole line
+        # (selectors, attributes, etc.)
+        remainder = line.dup # we'll be chomping into this
         while remainder.length > 0
           patterns.each do |type, pattern|
             match = remainder.match(pattern)
 
             if match
-              value = match[0]
+              footprint = match[0] # the whole match
+              value = match[1]     # the capture group
+
               @tokens << [type, value]
 
-              remainder = remainder[value.length..].strip
+              remainder = remainder[footprint.length..].strip
               break
             end
           end
         end
 
-      # Followup Attributes
-      elsif previous_token_type == :INDENT && !blank_since_last_tag
-        *_, pattern = patterns.find { |type, _| type == :ATTRIBUTE }
+      # Attributes immediately following tags on new lines
+      elsif previous_token_type == :INDENT &&
+          !blank_since_last_tag &&
+          patterns.find { |type, _| type == :ATTRIBUTE }.last.match?(line)
 
-        if pattern.match?(line)
-          @tokens << [:ATTRIBUTE, line]
-        end
+        @tokens << [:ATTRIBUTE, line]
 
-      # Parse as Markdown if we've seen a blank line since the last tag
-      elsif blank_since_last_tag
+      # TODO: handle multiline code blocks
+      else # Markdown
         @tokens << [:MARKDOWN, line]
-
-      else
-        raise "Unmatched line: #{line}"
       end
     end
 

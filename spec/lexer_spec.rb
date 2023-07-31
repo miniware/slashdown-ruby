@@ -6,7 +6,7 @@ RSpec.describe Lexer do
     lexer = Lexer.new("/div")
     tokens = lexer.lex
     expect(tokens).to eq [
-      [:TAG, "/div"]
+      [:TAG, "div"]
     ]
   end
 
@@ -14,7 +14,7 @@ RSpec.describe Lexer do
     lexer = Lexer.new("/ .my-class")
     tokens = lexer.lex
     expect(tokens).to eq [
-      [:TAG, "/"],
+      [:TAG, ""],
       [:SELECTOR, ".my-class"]
     ]
   end
@@ -23,7 +23,7 @@ RSpec.describe Lexer do
     lexer = Lexer.new("/section #hero.grid")
     tokens = lexer.lex
     expect(tokens).to eq [
-      [:TAG, "/section"],
+      [:TAG, "section"],
       [:SELECTOR, "#hero"],
       [:SELECTOR, ".grid"]
     ]
@@ -33,16 +33,16 @@ RSpec.describe Lexer do
     lexer = Lexer.new('/div data-foo="bar baz"')
     tokens = lexer.lex
     expect(tokens).to eq [
-      [:TAG, "/div"],
+      [:TAG, "div"],
       [:ATTRIBUTE, 'data-foo="bar baz"']
     ]
   end
 
-  it "can lex a simple tag with a class and an attribute" do
+  it "can lex a tag with a class and an attribute" do
     lexer = Lexer.new('/div .my-class data-foo="bar baz"')
     tokens = lexer.lex
     expect(tokens).to eq [
-      [:TAG, "/div"],
+      [:TAG, "div"],
       [:SELECTOR, ".my-class"],
       [:ATTRIBUTE, 'data-foo="bar baz"']
     ]
@@ -59,7 +59,7 @@ RSpec.describe Lexer do
     lexer = Lexer.new(src)
     tokens = lexer.lex
     expect(tokens).to eq [
-      [:TAG, "/div"],
+      [:TAG, "div"],
       [:INDENT, 1],
       [:ATTRIBUTE, 'data-foo="bar baz"'],
       [:BLANK],
@@ -83,19 +83,31 @@ RSpec.describe Lexer do
     lexer = Lexer.new(src)
     tokens = lexer.lex
     expect(tokens).to eq [
-      [:TAG, "/ul"],
+      [:TAG, "ul"],
       [:SELECTOR, ".list"],
       [:INDENT, 1],
-      [:TAG, "/li"],
-      [:TAG, "/li"],
+      [:TAG, "li"],
+      [:TAG, "li"],
       [:INDENT, 1],
       [:ATTRIBUTE, 'data-foo="bar baz"'],
-      [:TAG, "/span"],
+      [:TAG, "span"],
       [:DEDENT, 2],
-      [:TAG, "/footer"],
+      [:TAG, "footer"],
       [:BLANK],
       [:INDENT, 1],
       [:MARKDOWN, "This is outdented content"]
+    ]
+  end
+
+  it "can lex a tag with text content" do
+    src = <<~SD
+      /div = This is content
+    SD
+    lexer = Lexer.new(src)
+    tokens = lexer.lex
+    expect(tokens).to eq [
+      [:TAG, "div"],
+      [:TEXT, "This is content"]
     ]
   end
 end
