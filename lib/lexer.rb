@@ -1,77 +1,59 @@
 require_relative "token"
 
 class Lexer
+  attr_reader :indent_size
+
   def initialize(src, indent_size = 2)
     @src = src
     @indent_size = indent_size
-  end
-
-  def lex
     @tokens = []
-    @current_indentation = 0
 
     # Patterns to match
     # Each of these will be tried in order until one matches
     # Anything that falls through will be treated as markdown
     # Each pattern has a capture group which will be used as the value
-    patterns = [
+    @patterns = [
       [:TAG, /\/([\w-]*)/],
       [:SELECTOR, /([.#][\w-]+)/],
       [:ATTRIBUTE, /([\w-]+="[^"]*")/],
       [:TEXT, /=\s+(.+)$/]
     ]
+  end
 
+  def tokens
+    lex unless @tokens.length
+    @tokens
+  end
+
+  def lex
+    indentation = 0
     blank_since_last_tag = false
 
     @src.each_line do |line|
-      # skip comments
-      next if line.start_with?(/\A\s*\/\//)
+      next if line.start_with?(/\A\s*\/\//) # skip comments
 
-      # Blank lines are important but shouldn't affect indentation
+      # Blank lines are important (for MD) but shouldn't affect indentation
       if line.strip.empty?
-        @tokens << Token.new(:BLANK, nil, @current_indentation)
+        @tokens << Token.new(:BLANK, nil, indentation)
         blank_since_last_tag = true
         next
       end
 
-      # Track indentation
-      track_indent(line)
+      indentation = calculate_indentation(line)
       line = line.strip
 
-      # Start a tag
+      # is it a tag?
       if line.start_with?("/")
         blank_since_last_tag = false
+        process_tag_contents(line, indentation)
 
-        # look for patterns until we've consumed the whole line
-        # (selectors, attributes, etc.)
-        remainder = line.dup # we'll be chomping into this
-        while remainder.length > 0
-          patterns.each do |type, pattern|
-            match = remainder.match(pattern)
+      # what about an attribute?
+      elsif is_attribute?(line) && !blank_since_last_tag
+        @tokens << Token.new(:ATTRIBUTE, line, indentation)
 
-            if match
-              footprint = match[0] # the whole match
-              value = match[1]     # the capture group
-
-              value = "div" if type == :TAG && value == "" # cover `/` shorthand
-
-              @tokens << Token.new( type, value, @current_indentation )
-
-              remainder = remainder[footprint.length..].strip
-              break
-            end
-          end
-        end
-
-      # Attributes immediately following tags on new lines
-      elsif !blank_since_last_tag &&
-          patterns.find { |type, _| type == :ATTRIBUTE }.last.match?(line)
-
-        @tokens << Token.new( :ATTRIBUTE, line, @current_indentation )
-
-      # TODO: handle multiline code blocks
-      else # Markdown
-        @tokens << Token.new( :MARKDOWN, line, @current_indentation )
+      # let's just call it markdown...
+      else
+        @tokens << Token.new(:MARKDOWN, line, indentation)
       end
     end
 
@@ -80,37 +62,41 @@ class Lexer
 
   private
 
-  def previous_token_type index = 1
+  def is_attribute? line
+    pattern = @patterns.find { |type, _| type == :ATTRIBUTE }.last
+    pattern.match?( line )
+  end
+
+  def calculate_indentation(line)
+    leading_spaces = line.match(/^\s*/)[0].length
+    leading_spaces / @indent_size
+  end
+
+  def process_tag_contents(line, indentation)
+    remainder = line.dup # copy so that we can use it as a fuse
+
+    while remainder.length > 0
+      @patterns.each do |type, pattern|
+        match = remainder.match(pattern)
+        next unless match
+
+        footprint = match[0]
+        value = match[1]
+
+        # handle the shorthand `/`
+        # TODO: move this to the parser
+        value = "div" if type == :TAG && value == ""
+
+        @tokens << Token.new(type, value, indentation)
+
+        # burn down our fuse
+        remainder = remainder[footprint.length..].strip
+        break
+      end
+    end
+  end
+
+  def previous_token_type(index = 1)
     @tokens[-index]&.type if @tokens.any?
-  end
-
-  def track_indent(line)
-    spaces = line.match(/^\s*/)[0].length
-    indentation = spaces / @indent_size
-    @current_indentation = indentation
-  end
-end
-
-if __FILE__ == $0
-  src = <<~SD
-    /ul .list
-
-    // This is a comment which should be ignored
-      /li
-        data-foo="bar baz"
-      /li
-
-        This is even more content
-
-    /footer
-
-      This is outdented content
-  SD
-
-  lexer = Lexer.new(src)
-  tokens = lexer.lex
-
-  tokens.each do |type, value|
-    puts type.to_s + (value ? "  #{value.inspect}" : "")
   end
 end
