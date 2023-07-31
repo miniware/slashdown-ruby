@@ -4,3 +4,4 @@ ruby "3.2.2"
 source "https://rubygems.org"
 
 gem "rspec"
+gem 'simplecov', require: false, group: :test

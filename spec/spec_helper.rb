@@ -1,5 +1,7 @@
-require "rspec"
+require 'simplecov'
+SimpleCov.start
 
+require "rspec"
 RSpec.configure do |config|
   config.formatter = :progress
 
@@ -7,5 +9,3 @@ RSpec.configure do |config|
     c.max_formatted_output_length = nil
   end
 end
-
-require_relative "../lib/lexer"
