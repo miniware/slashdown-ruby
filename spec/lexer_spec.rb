@@ -12,7 +12,7 @@ RSpec.describe Lexer do
 
   it "can lex a simple tag" do
     lexer = Lexer.new("/div")
-    tokens = lexer.lex
+    tokens = lexer.tokens
     expect(tokens).to eq [
       Token.new(:TAG, "div", 0)
     ]
@@ -20,7 +20,7 @@ RSpec.describe Lexer do
 
   it "can lex a blank tag with a class" do
     lexer = Lexer.new("/ .my-class")
-    tokens = lexer.lex
+    tokens = lexer.tokens
     expect(tokens).to eq [
       Token.new(:TAG, "div", 0),
       Token.new(:SELECTOR, ".my-class", 0)
@@ -29,7 +29,7 @@ RSpec.describe Lexer do
 
   it "can lex multiple chained selectors" do
     lexer = Lexer.new("/section #hero.grid")
-    tokens = lexer.lex
+    tokens = lexer.tokens
     expect(tokens).to eq [
       Token.new(:TAG, "section", 0),
       Token.new(:SELECTOR, "#hero", 0),
@@ -39,7 +39,7 @@ RSpec.describe Lexer do
 
   it "can lex a tag with an attribute" do
     lexer = Lexer.new('/div data-foo="bar baz"')
-    tokens = lexer.lex
+    tokens = lexer.tokens
     expect(tokens).to eq [
       Token.new(:TAG, "div", 0),
       Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 0)
@@ -48,7 +48,7 @@ RSpec.describe Lexer do
 
   it "can lex a tag with a class and an attribute" do
     lexer = Lexer.new('/div .my-class data-foo="bar baz"')
-    tokens = lexer.lex
+    tokens = lexer.tokens
     expect(tokens).to eq [
       Token.new(:TAG, "div", 0),
       Token.new(:SELECTOR, ".my-class", 0),
@@ -65,7 +65,7 @@ RSpec.describe Lexer do
     SD
 
     lexer = Lexer.new(src)
-    tokens = lexer.lex
+    tokens = lexer.tokens
     expect(tokens).to eq [
       Token.new(:TAG, "div", 0),
       Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 1),
@@ -88,7 +88,7 @@ RSpec.describe Lexer do
     SD
 
     lexer = Lexer.new(src)
-    tokens = lexer.lex
+    tokens = lexer.tokens
     expect(tokens).to eq [
       Token.new(:TAG, "ul", 0),
       Token.new(:SELECTOR, ".list", 0),
@@ -107,7 +107,7 @@ RSpec.describe Lexer do
       /div = This is text
     SD
     lexer = Lexer.new(src)
-    tokens = lexer.lex
+    tokens = lexer.tokens
     expect(tokens).to eq [
       Token.new(:TAG, "div", 0),
       Token.new(:TEXT, "This is text", 0)

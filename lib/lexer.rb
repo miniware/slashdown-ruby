@@ -12,19 +12,23 @@ class Lexer
     @tokens = []
 
     # Patterns to match
-    # Each of these will be tried in order until one matches
+    # THE ORDER IS VERY IMPORTANT
     # Anything that falls through will be treated as markdown
     # Each pattern has a capture group which will be used as the value
     @patterns = [
       [:TAG, /\/([\w-]*)/],
       [:SELECTOR, /([.#][\w-]+)/],
-      [:ATTRIBUTE, /([\w-]+="[^"]*")/],
-      [:TEXT, /=\s+(.+)$/]
+      [:TEXT, /=\s+(.+)$/],
+      [:ATTRIBUTE, /([\w-]+="[^"]*")|([\w-]+)/],
     ]
+
+    # this helps us track whether or not
+    # there's been an empty line since the last tag
+    @directly_under_last_tag = false
   end
 
   def tokens
-    lex unless @tokens.length
+    lex if @tokens.empty?
     @tokens
   end
 
@@ -43,6 +47,7 @@ class Lexer
 
     if blank_line?(line)
       handle_blank_line
+      @directly_under_last_tag = false
     else
       handle_non_blank_line(line)
     end
@@ -64,10 +69,16 @@ class Lexer
     indentation = calculate_indentation(line)
     line = line.strip
 
+    # It's a tag!
     if line.start_with?("/")
       process_tag_contents(line, indentation)
-    elsif is_attribute?(line)
+      @directly_under_last_tag = true
+
+    # or an attribute right after a tag!
+    elsif @directly_under_last_tag && is_attribute?(line)
       @tokens << Token.new(:ATTRIBUTE, line, indentation)
+
+    # otherwise it's Markdown's problem
     else
       @tokens << Token.new(:MARKDOWN, line, indentation)
     end
@@ -92,7 +103,7 @@ class Lexer
         next unless match
 
         footprint = match[0]
-        value = match[1]
+        value = match.captures.compact.first
 
         # handle the shorthand `/`
         # TODO: move this to the parser
@@ -105,9 +116,5 @@ class Lexer
         break
       end
     end
-  end
-
-  def previous_token_type(index = 1)
-    @tokens[-index]&.type if @tokens.any?
   end
 end
