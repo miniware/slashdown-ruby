@@ -4,6 +4,9 @@ class Lexer
   attr_reader :indent_size
 
   def initialize(src, indent_size = 2)
+    raise ArgumentError, "Source code cannot be nil" if src.nil?
+    raise ArgumentError, "Source code must be a string" unless src.is_a?(String)
+
     @src = src
     @indent_size = indent_size
     @tokens = []

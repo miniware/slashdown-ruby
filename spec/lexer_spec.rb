@@ -2,6 +2,14 @@ require "spec_helper"
 require "lexer"
 
 RSpec.describe Lexer do
+  it "raises an error if source code is nil" do
+    expect { Lexer.new(nil) }.to raise_error(ArgumentError, "Source code cannot be nil")
+  end
+
+  it "raises an error if source code is not a string" do
+    expect { Lexer.new(123) }.to raise_error(ArgumentError, "Source code must be a string")
+  end
+
   it "can lex a simple tag" do
     lexer = Lexer.new("/div")
     tokens = lexer.lex
