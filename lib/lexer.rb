@@ -1,3 +1,5 @@
+require_relative "token"
+
 class Lexer
   def initialize(src, indent_size = 2)
     @src = src
@@ -27,7 +29,7 @@ class Lexer
 
       # Blank lines are important but shouldn't affect indentation
       if line.strip.empty?
-        @tokens << [:BLANK]
+        @tokens << Token.new(:BLANK, nil, @current_indentation)
         blank_since_last_tag = true
         next
       end
@@ -51,7 +53,9 @@ class Lexer
               footprint = match[0] # the whole match
               value = match[1]     # the capture group
 
-              @tokens << [type, value]
+              value = "div" if type == :TAG && value == "" # cover `/` shorthand
+
+              @tokens << Token.new( type, value, @current_indentation )
 
               remainder = remainder[footprint.length..].strip
               break
@@ -60,15 +64,14 @@ class Lexer
         end
 
       # Attributes immediately following tags on new lines
-      elsif previous_token_type == :INDENT &&
-          !blank_since_last_tag &&
+      elsif !blank_since_last_tag &&
           patterns.find { |type, _| type == :ATTRIBUTE }.last.match?(line)
 
-        @tokens << [:ATTRIBUTE, line]
+        @tokens << Token.new( :ATTRIBUTE, line, @current_indentation )
 
       # TODO: handle multiline code blocks
       else # Markdown
-        @tokens << [:MARKDOWN, line]
+        @tokens << Token.new( :MARKDOWN, line, @current_indentation )
       end
     end
 
@@ -78,26 +81,13 @@ class Lexer
   private
 
   def previous_token_type index = 1
-    @tokens[-index]&.first if @tokens.any?
+    @tokens[-index]&.type if @tokens.any?
   end
 
   def track_indent(line)
     spaces = line.match(/^\s*/)[0].length
     indentation = spaces / @indent_size
-
-    is_child = indentation > @current_indentation
-    is_elder = indentation < @current_indentation
-
-    if is_child
-      @tokens << [:INDENT, 1]
-    elsif is_elder
-      dedents = @current_indentation - indentation
-      @tokens << [:DEDENT, dedents]
-    end
-
     @current_indentation = indentation
-
-    spaces
   end
 end
 
