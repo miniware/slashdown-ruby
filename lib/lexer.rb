@@ -19,7 +19,7 @@ class Lexer
       [:TAG, /\/([\w-]*)/],
       [:SELECTOR, /([.#][\w-]+)/],
       [:TEXT, /=\s+(.+)$/],
-      [:ATTRIBUTE, /([\w-]+="[^"]*")|([\w-]+)/],
+      [:ATTRIBUTE, /([\w-]+="[^"]*")|([\w-]+)/]
     ]
 
     # this helps us track whether or not
@@ -86,7 +86,7 @@ class Lexer
 
   def is_attribute? line
     pattern = @patterns.find { |type, _| type == :ATTRIBUTE }.last
-    pattern.match?( line )
+    pattern.match?(line)
   end
 
   def calculate_indentation(line)

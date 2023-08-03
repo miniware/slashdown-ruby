@@ -9,12 +9,12 @@ class Token
   end
 
   def <=>(other)
-    self.indentation <=> other.indentation
+    indentation <=> other.indentation
   end
 
   def ==(other)
-    self.type == other.type &&
-    self.value == other.value &&
-    self.indentation == other.indentation
+    type == other.type &&
+      value == other.value &&
+      indentation == other.indentation
   end
 end
