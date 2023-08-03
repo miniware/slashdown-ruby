@@ -1,15 +1,10 @@
 class Token
-  include Comparable
   attr_reader :type, :value, :indentation
 
   def initialize(type, value, indentation = 0)
     @type = type
     @value = value
     @indentation = indentation
-  end
-
-  def <=>(other)
-    indentation <=> other.indentation
   end
 
   def ==(other)
