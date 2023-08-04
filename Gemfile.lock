@@ -4,9 +4,7 @@ GEM
     awesome_print (1.9.2)
     diff-lcs (1.5.0)
     docile (1.4.0)
-    nokogiri (1.15.3-arm64-darwin)
-      racc (~> 1.4)
-    racc (1.7.1)
+    htmlbeautifier (1.4.2)
     redcarpet (3.6.0)
     rspec (3.12.0)
       rspec-core (~> 3.12.0)
@@ -33,7 +31,7 @@ PLATFORMS
 
 DEPENDENCIES
   awesome_print
-  nokogiri
+  htmlbeautifier
   redcarpet
   rspec
   simplecov

@@ -23,6 +23,8 @@ class Node
 end
 
 class TagNode < Node
+  # TODO: Implement self closing tags
+
   def initialize identifier
     super(:TAG, identifier)
 

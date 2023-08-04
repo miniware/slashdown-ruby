@@ -1,5 +1,8 @@
 require_relative "spec_helper"
 
+require 'nokogiri'
+
+
 RSpec.describe "Slashdown compiler" do
   let(:src) { File.read("spec/fixtures/example.sd") }
   let(:expected_html) { File.read("spec/fixtures/expected.html") }
@@ -7,19 +10,22 @@ RSpec.describe "Slashdown compiler" do
   it "converts slashdown to html" do
     lexer = Lexer.new(src)
     tokens = lexer.tokens
+    expect(tokens.length).to eq(35)
 
-    # expect(tokens.length).to eq(36)
+    parser = Parser.new(tokens)
+    ast = parser.ast
+    expect(ast.length).to eq(1)
 
-    # parser = Parser.new(tokens)
-    # ast = parser.ast
+    renderer = Renderer.new(ast)
+    html = renderer.render
 
-    # expect(ast.length).to eq(1)
+    # Parse the HTML fragments using Nokogiri
+    parsed_html = Nokogiri::HTML::DocumentFragment.parse(html).canonicalize
+    parsed_expected_html = Nokogiri::HTML::DocumentFragment.parse(expected_html).canonicalize
 
-    # renderer = Renderer.new(ast)
-    # html = renderer.render
-    # expect(html).to eq(expected_html)
+    expect(parsed_html.to_s).to eq(parsed_expected_html.to_s)
 
     # Write HTML to a file for manual checking
-    # File.write("output.html", html)
+    File.write("output.html", html)
   end
 end

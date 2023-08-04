@@ -45,7 +45,9 @@ class Parser
         next
       end
 
-      if next_token.indentation > start_tag.indentation
+      indentation_immune_tokens = [:ATTRIBUTE, :SELECTOR, :TEXT]
+
+      if next_token.indentation > start_tag.indentation || indentation_immune_tokens.include?(next_token.type)
         token = consume_next
 
         case token.type

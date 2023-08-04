@@ -12,7 +12,7 @@
   // Anything not starting with a `/` is a child of the previous tag, and will be rendered as markdown
   // Indentation is important! It determines the parent/child relationship of tags.
 
-  # This is a heading. It will be rendered as an <h1> tag.
+  # This is a heading. It will be rendered as an `h1` tag.
 
   It's the child of the section element above it.
 

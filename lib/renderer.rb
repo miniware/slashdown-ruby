@@ -1,14 +1,33 @@
 require "redcarpet"
-require "nokogiri"
+require "htmlbeautifier"
 
 class Renderer
+  # TODO: Find a better way to handle self closing tags
+  SELF_CLOSING_TAGS = [
+    "input",
+    "img",
+    "br",
+    "hr",
+    "meta",
+    "link",
+    "base",
+    "area",
+    "col",
+    "command",
+    "embed",
+    "keygen",
+    "param",
+    "source",
+    "track",
+    "wbr"
+  ]
+
   def initialize(ast)
     @ast = ast
   end
 
   def render
-    html = @ast.map { |child| render_node(child) }.join
-    Nokogiri::HTML::DocumentFragment.parse(html).to_html(indent: 2)
+    @ast.map { |child| render_node(child) }.join
   end
 
   private
@@ -28,13 +47,18 @@ class Renderer
 
   def render_tag(tag_node)
     identifier = tag_node.identifier
+    self_closing = SELF_CLOSING_TAGS.include? identifier
     attributes = render_attributes_and_selectors(tag_node)
     children = tag_node.children.map { |child| render_node(child) }.join
 
-    opening_tag = attributes.nil? ? "<#{identifier}>" : "<#{identifier} #{attributes}>"
-    closing_tag = "</#{identifier}>"
+    if self_closing
+      attributes.nil? ? "<#{identifier} />" : "<#{identifier} #{attributes} />"
+    else
+      opening_tag = attributes.nil? ? "<#{identifier}>" : "<#{identifier} #{attributes}>"
+      closing_tag = "</#{identifier}>"
 
-    [opening_tag, children, closing_tag].join
+      [opening_tag, children, closing_tag].join
+    end
   end
 
   def render_attributes_and_selectors(tag_node)
