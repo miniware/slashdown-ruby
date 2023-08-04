@@ -1,8 +1,13 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    awesome_print (1.9.2)
     diff-lcs (1.5.0)
     docile (1.4.0)
+    nokogiri (1.15.3-arm64-darwin)
+      racc (~> 1.4)
+    racc (1.7.1)
+    redcarpet (3.6.0)
     rspec (3.12.0)
       rspec-core (~> 3.12.0)
       rspec-expectations (~> 3.12.0)
@@ -27,6 +32,9 @@ PLATFORMS
   arm64-darwin-22
 
 DEPENDENCIES
+  awesome_print
+  nokogiri
+  redcarpet
   rspec
   simplecov
 

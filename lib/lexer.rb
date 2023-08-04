@@ -3,23 +3,21 @@ require_relative "token"
 class Lexer
   attr_reader :indent_size
 
-  def initialize(src, indent_size = 2)
+  def initialize(src)
     raise ArgumentError, "Source code cannot be nil" if src.nil?
     raise ArgumentError, "Source code must be a string" unless src.is_a?(String)
 
     @src = src
-    @indent_size = indent_size
     @tokens = []
 
     # Patterns to match
-    # THE ORDER IS VERY IMPORTANT
     # Anything that falls through will be treated as markdown
     # Each pattern has a capture group which will be used as the value
     @patterns = [
-      [:TAG, /\/([\w-]*)/],
-      [:SELECTOR, /([.#][\w-]+)/],
-      [:TEXT, /=\s+(.+)$/],
-      [:ATTRIBUTE, /([\w-]+="[^"]*")|([\w-]+)/]
+      [:TAG, /^\/([\w-]*)/],
+      [:SELECTOR, /^([.#][\w-]+)/],
+      [:ATTRIBUTE, /^([\w-]+="[^"]*")|^([\w-]+)/],
+      [:TEXT, /^=\s+(.+)$/]
     ]
 
     # this helps us track whether or not
@@ -53,6 +51,25 @@ class Lexer
     end
   end
 
+  def handle_non_blank_line(line)
+    indentation = calculate_indentation(line)
+    line = line.strip
+
+    # It's a tag!
+    if line.start_with?("/")
+      process_tag_contents(line, indentation)
+      @directly_under_last_tag = true
+
+    # or an attribute right after a tag!
+    elsif @directly_under_last_tag && is_newline_attribute?(line)
+      @tokens << Token.new(:ATTRIBUTE, line, indentation)
+
+    # otherwise it's Markdown's problem
+    else
+      @tokens << Token.new(:MARKDOWN, line, indentation)
+    end
+  end
+
   def comment_line?(line)
     line.start_with?(/\A\s*\/\//)
   end
@@ -65,33 +82,14 @@ class Lexer
     @tokens << Token.new(:BLANK, nil, nil)
   end
 
-  def handle_non_blank_line(line)
-    indentation = calculate_indentation(line)
-    line = line.strip
-
-    # It's a tag!
-    if line.start_with?("/")
-      process_tag_contents(line, indentation)
-      @directly_under_last_tag = true
-
-    # or an attribute right after a tag!
-    elsif @directly_under_last_tag && is_attribute?(line)
-      @tokens << Token.new(:ATTRIBUTE, line, indentation)
-
-    # otherwise it's Markdown's problem
-    else
-      @tokens << Token.new(:MARKDOWN, line, indentation)
-    end
-  end
-
-  def is_attribute? line
-    pattern = @patterns.find { |type, _| type == :ATTRIBUTE }.last
-    pattern.match?(line)
+  def is_newline_attribute? line
+    attribute_pattern = @patterns.find { |type, _| type == :ATTRIBUTE }.last
+    attribute_on_one_line = /#{attribute_pattern}$/
+    attribute_on_one_line.match?(line)
   end
 
   def calculate_indentation(line)
-    leading_spaces = line.match(/^\s*/)[0].length
-    leading_spaces / @indent_size
+    line.match(/^\s*/)[0].length # leading spaces
   end
 
   def process_tag_contents(line, indentation)
@@ -104,10 +102,6 @@ class Lexer
 
         footprint = match[0]
         value = match.captures.compact.first
-
-        # handle the shorthand `/`
-        # TODO: move this to the parser
-        value = "div" if type == :TAG && value == ""
 
         @tokens << Token.new(type, value, indentation)
 

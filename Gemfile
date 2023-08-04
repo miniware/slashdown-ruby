@@ -3,5 +3,8 @@
 ruby "3.2.2"
 source "https://rubygems.org"
 
-gem "rspec"
-gem 'simplecov', require: false, group: :test
+gem "redcarpet"
+gem "nokogiri"
+gem "rspec", group: :test
+gem "simplecov", require: false, group: :test
+gem "awesome_print", require: false, group: :test

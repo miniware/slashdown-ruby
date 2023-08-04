@@ -1,5 +1,4 @@
 require "spec_helper"
-require "lexer"
 
 RSpec.describe Lexer do
   it "raises an error if source code is nil" do
@@ -22,7 +21,7 @@ RSpec.describe Lexer do
     lexer = Lexer.new("/ .my-class")
     tokens = lexer.tokens
     expect(tokens).to eq [
-      Token.new(:TAG, "div", 0),
+      Token.new(:TAG, "", 0),
       Token.new(:SELECTOR, ".my-class", 0)
     ]
   end
@@ -37,41 +36,41 @@ RSpec.describe Lexer do
     ]
   end
 
-  it "can lex a tag with an attribute" do
-    lexer = Lexer.new('/div data-foo="bar baz"')
-    tokens = lexer.tokens
-    expect(tokens).to eq [
-      Token.new(:TAG, "div", 0),
-      Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 0)
-    ]
-  end
+  describe "attributes" do
+    it "works" do
+      lexer = Lexer.new('/div data-foo="bar baz"')
+      tokens = lexer.tokens
+      expect(tokens).to eq [
+        Token.new(:TAG, "div", 0),
+        Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 0)
+      ]
+    end
 
-  it "can lex a tag with a class and an attribute" do
-    lexer = Lexer.new('/div .my-class data-foo="bar baz"')
-    tokens = lexer.tokens
-    expect(tokens).to eq [
-      Token.new(:TAG, "div", 0),
-      Token.new(:SELECTOR, ".my-class", 0),
-      Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 0)
-    ]
-  end
+    it "can have both classes and attributes" do
+      lexer = Lexer.new('/div .my-class data-foo="bar baz"')
+      tokens = lexer.tokens
+      expect(tokens).to eq [
+        Token.new(:TAG, "div", 0),
+        Token.new(:SELECTOR, ".my-class", 0),
+        Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 0)
+      ]
+    end
 
-  it "can lex a tag with attributes on a new line" do
-    src = <<~SD
-      /div
-        data-foo="bar baz"
+    it "can lex attributes on a new line" do
+      src = <<~SD
+        /div
+          data-foo="bar baz"
+          This is content
+      SD
 
-        This is content
-    SD
-
-    lexer = Lexer.new(src)
-    tokens = lexer.tokens
-    expect(tokens).to eq [
-      Token.new(:TAG, "div", 0),
-      Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 1),
-      Token.new(:BLANK, nil, nil),
-      Token.new(:MARKDOWN, "This is content", 1)
-    ]
+      lexer = Lexer.new(src)
+      tokens = lexer.tokens
+      expect(tokens).to eq [
+        Token.new(:TAG, "div", 0),
+        Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 2),
+        Token.new(:MARKDOWN, "This is content", 2)
+      ]
+    end
   end
 
   it "tracks indentation properly" do
@@ -92,13 +91,13 @@ RSpec.describe Lexer do
     expect(tokens).to eq [
       Token.new(:TAG, "ul", 0),
       Token.new(:SELECTOR, ".list", 0),
-      Token.new(:TAG, "li", 1),
-      Token.new(:TAG, "li", 1),
-      Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 2),
-      Token.new(:TAG, "span", 2),
+      Token.new(:TAG, "li", 2),
+      Token.new(:TAG, "li", 2),
+      Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 4),
+      Token.new(:TAG, "span", 4),
       Token.new(:TAG, "footer", 0),
       Token.new(:BLANK, nil, nil),
-      Token.new(:MARKDOWN, "This is outdented content", 1)
+      Token.new(:MARKDOWN, "This is outdented content", 2)
     ]
   end
 

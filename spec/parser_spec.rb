@@ -1,39 +1,45 @@
-require "parser"
+require_relative "spec_helper"
 
 RSpec.describe Parser do
-  let(:tokens) { [Token.new(:TAG, "div", 0), Token.new(:MARKDOWN, "This is content", 1)] }
-  let(:parser) { Parser.new(tokens) }
+  it "coerces blank tags to divs" do
+    tokens = [Token.new(:TAG, "", 0)]
+    tag_node = Parser.new(tokens).ast.first
 
-  describe "#initialize" do
-    it "initializes with an array of tokens" do
-      expect(parser.instance_variable_get(:@tokens)).to eq(tokens)
-    end
-
-    it "sets the cursor to 0" do
-      expect(parser.instance_variable_get(:@cursor)).to eq(0)
-    end
+    expect(tag_node.identifier).to eq("div")
   end
 
-  describe "#parse" do
-    let(:tokens) do
-      [
-        Token.new(:TAG, "div", 0),
-        Token.new(:SELECTOR, ".container", 1),
-        Token.new(:TAG, "p", 2),
-        Token.new(:MARKDOWN, "This is content", 2)
-      ]
-    end
+  it "correctly manages hierarchy and children" do
+    # rubocop:disable Layout/ArrayAlignment
+    tokens = [
+      Token.new(:TAG, "section", 0),
+        Token.new(:ATTRIBUTE, "foo='bar'", 1),
+        Token.new(:TAG, "h1", 1),
+          Token.new(:TEXT, "Hello World!", 2),
+        Token.new(:MARKDOWN, "This is content", 1),
+        Token.new(:BLANK, nil, nil),
+        Token.new(:MARKDOWN, "This is more content", 1),
+      Token.new(:TAG, "footer", 0),
+        Token.new(:TEXT, "Goodnight Moon.", 1)
+    ]
+    # rubocop:enable Layout/ArrayAlignment
 
-    it "correctly manages hierarchy and children" do
-      nodes = Parser.new(tokens).parse
-      div_node = nodes.first
+    ast = Parser.new(tokens).ast
 
-      expect(div_node.type).to eq(:TAG)
-      expect(div_node.identifier).to eq("div")
-      expect(div_node.classes).to include("container")
-      expect(div_node.children.length)
+    section, footer = ast
 
-      # TODO: Finish this
-    end
+    expect(section.identifier).to eq("section")
+    expect(section.all_attributes).to include("foo='bar'")
+    expect(section.children.length).to eq(2)
+
+    expect(footer.identifier).to eq("footer")
+    expect(footer.children.length).to eq(1)
+    expect(footer.children.first.content).to eq("Goodnight Moon.")
+
+    h1, md = section.children
+    expect(h1.type).to eq(:TAG)
+    expect(h1.identifier).to eq("h1")
+    expect(h1.children.length).to eq(1)
+
+    expect(md.content).to eq("This is content\n\nThis is more content")
   end
 end

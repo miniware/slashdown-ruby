@@ -1,11 +1,8 @@
-/*
-  Welcome to slashdown!
-  A superset of markdown for quickly creating web pages.
-  Plays *very* well with: HTMX, Tailwind, AlpineJS, and the backend of your choice.
-*/
+//  Welcome to slashdown!
+//  A superset of markdown for quickly creating web pages.
+//  Plays *very* well with: HTMX, Tailwind, AlpineJS, and the backend of your choice.
 
 // This is a comment. It will not be rendered in the output.
-// As you can see above, /* */ multiline comments are also supported.
 
 /main .container.mx-auto
   // Any line starting with a `/` is a tag, unless it's a comment.
@@ -33,10 +30,8 @@
     // And items on the immediate next line after a tag, if indented, will be parsed as attributes.
 
   // Items at the same indent level become siblings.
-  /footer
-    .flex.justify-between
-
+  /footer .flex.justify-between
     Made with ❤️ by slashdown.
 
-    /a href="https://miniware.team" target="_blank"
-      Made by Miniware
+    // Plaintext can be easily added with ` = ` at the end of a tag
+    /a href="https://miniware.team" target="_blank" = Made by Miniware

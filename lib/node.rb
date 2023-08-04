@@ -11,11 +11,18 @@ class Node
   def add_child node
     @children << node
   end
+
+  def to_h
+    {
+      type: @type,
+      content: @content,
+      children: @children.map(&:to_h)
+    }
+  end
+
 end
 
 class TagNode < Node
-  attr_accessor :attributes, :ids, :classes
-
   def initialize identifier
     super(:TAG, identifier)
 
@@ -25,7 +32,11 @@ class TagNode < Node
   end
 
   def identifier
-    self.content
+    @content
+  end
+
+  def add_attribute attribute
+    @attributes << attribute
   end
 
   def add_selector selector
@@ -40,4 +51,21 @@ class TagNode < Node
       raise "Unexpected character in selector"
     end
   end
+
+  def all_attributes
+    classes = "class=\"#{@classes.join(" ")}\"" unless @classes.empty?
+    ids = "id=\"#{@ids.join(" ")}\"" unless @ids.empty?
+
+    [ids, classes].compact.concat @attributes
+  end
+
+  def to_h
+    {
+      type: @type,
+      identifier: identifier,
+      attributes: all_attributes,
+      children: @children.map(&:to_h)
+    }
+  end
+
 end
