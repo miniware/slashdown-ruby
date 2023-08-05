@@ -1,16 +1,16 @@
 require "spec_helper"
 require "renderer"
 
-RSpec.describe Renderer do
+RSpec.describe Slashdown::Renderer do
   let(:ast) do
-    p = TagNode.new "p"
+    p = Slashdown::TagNode.new "p"
     p.add_selector ".font-bold"
     p.add_attribute 'foo="bar"'
-    p.add_child Node.new :TEXT, "Hello world!"
+    p.add_child Slashdown::Node.new :TEXT, "Hello world!"
 
     [p]
   end
-  let(:renderer) { Renderer.new(ast) }
+  let(:renderer) { Slashdown::Renderer.new(ast) }
 
   describe "#render" do
     it "renders the AST to HTML" do

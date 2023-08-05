@@ -1,58 +1,58 @@
 require "spec_helper"
 
-RSpec.describe Lexer do
+RSpec.describe Slashdown::Lexer do
   it "raises an error if source code is nil" do
-    expect { Lexer.new(nil) }.to raise_error(ArgumentError, "Source code cannot be nil")
+    expect { Slashdown::Lexer.new(nil) }.to raise_error(ArgumentError, "Source code cannot be nil")
   end
 
   it "raises an error if source code is not a string" do
-    expect { Lexer.new(123) }.to raise_error(ArgumentError, "Source code must be a string")
+    expect { Slashdown::Lexer.new(123) }.to raise_error(ArgumentError, "Source code must be a string")
   end
 
   it "can lex a simple tag" do
-    lexer = Lexer.new("/div")
+    lexer = Slashdown::Lexer.new("/div")
     tokens = lexer.tokens
     expect(tokens).to eq [
-      Token.new(:TAG, "div", 0)
+      Slashdown::Token.new(:TAG, "div", 0)
     ]
   end
 
   it "can lex a blank tag with a class" do
-    lexer = Lexer.new("/ .my-class")
+    lexer = Slashdown::Lexer.new("/ .my-class")
     tokens = lexer.tokens
     expect(tokens).to eq [
-      Token.new(:TAG, "", 0),
-      Token.new(:SELECTOR, ".my-class", 0)
+      Slashdown::Token.new(:TAG, "", 0),
+      Slashdown::Token.new(:SELECTOR, ".my-class", 0)
     ]
   end
 
   it "can lex multiple chained selectors" do
-    lexer = Lexer.new("/section #hero.grid")
+    lexer = Slashdown::Lexer.new("/section #hero.grid")
     tokens = lexer.tokens
     expect(tokens).to eq [
-      Token.new(:TAG, "section", 0),
-      Token.new(:SELECTOR, "#hero", 0),
-      Token.new(:SELECTOR, ".grid", 0)
+      Slashdown::Token.new(:TAG, "section", 0),
+      Slashdown::Token.new(:SELECTOR, "#hero", 0),
+      Slashdown::Token.new(:SELECTOR, ".grid", 0)
     ]
   end
 
   describe "attributes" do
     it "works" do
-      lexer = Lexer.new('/div data-foo="bar baz"')
+      lexer = Slashdown::Lexer.new('/div data-foo="bar baz"')
       tokens = lexer.tokens
       expect(tokens).to eq [
-        Token.new(:TAG, "div", 0),
-        Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 0)
+        Slashdown::Token.new(:TAG, "div", 0),
+        Slashdown::Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 0)
       ]
     end
 
     it "can have both classes and attributes" do
-      lexer = Lexer.new('/div .my-class data-foo="bar baz"')
+      lexer = Slashdown::Lexer.new('/div .my-class data-foo="bar baz"')
       tokens = lexer.tokens
       expect(tokens).to eq [
-        Token.new(:TAG, "div", 0),
-        Token.new(:SELECTOR, ".my-class", 0),
-        Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 0)
+        Slashdown::Token.new(:TAG, "div", 0),
+        Slashdown::Token.new(:SELECTOR, ".my-class", 0),
+        Slashdown::Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 0)
       ]
     end
 
@@ -63,12 +63,12 @@ RSpec.describe Lexer do
           This is content
       SD
 
-      lexer = Lexer.new(src)
+      lexer = Slashdown::Lexer.new(src)
       tokens = lexer.tokens
       expect(tokens).to eq [
-        Token.new(:TAG, "div", 0),
-        Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 2),
-        Token.new(:MARKDOWN, "This is content", 2)
+        Slashdown::Token.new(:TAG, "div", 0),
+        Slashdown::Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 2),
+        Slashdown::Token.new(:MARKDOWN, "This is content", 2)
       ]
     end
   end
@@ -86,18 +86,18 @@ RSpec.describe Lexer do
         This is outdented content
     SD
 
-    lexer = Lexer.new(src)
+    lexer = Slashdown::Lexer.new(src)
     tokens = lexer.tokens
     expect(tokens).to eq [
-      Token.new(:TAG, "ul", 0),
-      Token.new(:SELECTOR, ".list", 0),
-      Token.new(:TAG, "li", 2),
-      Token.new(:TAG, "li", 2),
-      Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 4),
-      Token.new(:TAG, "span", 4),
-      Token.new(:TAG, "footer", 0),
-      Token.new(:BLANK, nil, nil),
-      Token.new(:MARKDOWN, "This is outdented content", 2)
+      Slashdown::Token.new(:TAG, "ul", 0),
+      Slashdown::Token.new(:SELECTOR, ".list", 0),
+      Slashdown::Token.new(:TAG, "li", 2),
+      Slashdown::Token.new(:TAG, "li", 2),
+      Slashdown::Token.new(:ATTRIBUTE, 'data-foo="bar baz"', 4),
+      Slashdown::Token.new(:TAG, "span", 4),
+      Slashdown::Token.new(:TAG, "footer", 0),
+      Slashdown::Token.new(:BLANK, nil, nil),
+      Slashdown::Token.new(:MARKDOWN, "This is outdented content", 2)
     ]
   end
 
@@ -105,11 +105,11 @@ RSpec.describe Lexer do
     src = <<~SD
       /div = This is text
     SD
-    lexer = Lexer.new(src)
+    lexer = Slashdown::Lexer.new(src)
     tokens = lexer.tokens
     expect(tokens).to eq [
-      Token.new(:TAG, "div", 0),
-      Token.new(:TEXT, "This is text", 0)
+      Slashdown::Token.new(:TAG, "div", 0),
+      Slashdown::Token.new(:TEXT, "This is text", 0)
     ]
   end
 end

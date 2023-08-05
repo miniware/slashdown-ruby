@@ -1,123 +1,125 @@
 require_relative "node"
 
-class Parser
-  def initialize(tokens)
-    @tokens = tokens
-    @cursor = 0
-  end
-
-  def ast
-    @ast ||= parse
-  end
-
-  def parse
-    @ast = []
-
-    while remaining_tokens?
-      token = consume_next
-
-      case token.type
-      when :TAG
-        @ast << parse_tag(token)
-      when :MARKDOWN
-        @ast << parse_markdown(token)
-      end
+module Slashdown
+  class Parser
+    def initialize(tokens)
+      @tokens = tokens
+      @cursor = 0
     end
 
-    @ast
-  end
+    def ast
+      @ast ||= parse
+    end
 
-  private
+    def parse
+      @ast = []
 
-  # A tag likely has many children, recurses
-  def parse_tag start_tag
-    identifier = start_tag.value
-    identifier = "div" if identifier.empty? # handle `/` shorthand
-    tag = TagNode.new(identifier)
-
-    while remaining_tokens?
-      next_token = lookahead
-
-      if next_token.type == :BLANK
-        # :BLANKs are only important within :MARKDOWN
-        # So we eat the next token and move on
-        consume_next
-        next
-      end
-
-      indentation_immune_tokens = [:ATTRIBUTE, :SELECTOR, :TEXT]
-
-      if next_token.indentation > start_tag.indentation || indentation_immune_tokens.include?(next_token.type)
+      while remaining_tokens?
         token = consume_next
 
         case token.type
-        when :MARKDOWN
-          tag.add_child(parse_markdown(token)) if next_token.indentation > start_tag.indentation
-
         when :TAG
-          tag.add_child(parse_tag(token)) if next_token.indentation > start_tag.indentation
-
-        when :ATTRIBUTE
-          tag.add_attribute token.value
-
-        when :SELECTOR
-          tag.add_selector token.value
-
-        when :TEXT
-          tag.add_child Node.new(:TEXT, token.value)
-
+          @ast << parse_tag(token)
+        when :MARKDOWN
+          @ast << parse_markdown(token)
         end
-      else
-        break # exit the loop
       end
+
+      @ast
     end
 
-    tag
-  end
+    private
 
-  def parse_markdown md_token
-    markdown = Node.new(:MARKDOWN, md_token.value)
+    # A tag likely has many children, recurses
+    def parse_tag start_tag
+      identifier = start_tag.value
+      identifier = "div" if identifier.empty? # handle `/` shorthand
+      tag = TagNode.new(identifier)
 
-    while remaining_tokens? && lookahead.type != :TAG
-      token = consume_next
+      while remaining_tokens?
+        next_token = lookahead
 
-      case token.type
-      when :BLANK
-        markdown.content += "\n"
-      when :MARKDOWN
-        markdown.content += "\n" + token.value
-      else
-        throw "Unexpected token in Markdown block: #{token.inspect}"
+        if next_token.type == :BLANK
+          # :BLANKs are only important within :MARKDOWN
+          # So we eat the next token and move on
+          consume_next
+          next
+        end
+
+        indentation_immune_tokens = [:ATTRIBUTE, :SELECTOR, :TEXT]
+
+        if next_token.indentation > start_tag.indentation || indentation_immune_tokens.include?(next_token.type)
+          token = consume_next
+
+          case token.type
+          when :MARKDOWN
+            tag.add_child(parse_markdown(token)) if next_token.indentation > start_tag.indentation
+
+          when :TAG
+            tag.add_child(parse_tag(token)) if next_token.indentation > start_tag.indentation
+
+          when :ATTRIBUTE
+            tag.add_attribute token.value
+
+          when :SELECTOR
+            tag.add_selector token.value
+
+          when :TEXT
+            tag.add_child Node.new(:TEXT, token.value)
+
+          end
+        else
+          break # exit the loop
+        end
       end
+
+      tag
     end
 
-    markdown
-  end
+    def parse_markdown md_token
+      markdown = Node.new(:MARKDOWN, md_token.value)
 
-  # Indexing
+      while remaining_tokens? && lookahead.type != :TAG
+        token = consume_next
 
-  def remaining_tokens?
-    !lookahead.nil?
-  end
+        case token.type
+        when :BLANK
+          markdown.content += "\n"
+        when :MARKDOWN
+          markdown.content += "\n" + token.value
+        else
+          throw "Unexpected token in Markdown block: #{token.inspect}"
+        end
+      end
 
-  def lookahead
-    return nil if @cursor >= @tokens.length
+      markdown
+    end
 
-    # this *isn't* +1 because of zero-indexing
-    @tokens[@cursor]
-  end
+    # Indexing
 
-  def lookbehind
-    index = @cursor - 1
-    return nil if index < 0
+    def remaining_tokens?
+      !lookahead.nil?
+    end
 
-    @tokens[@cursor - 1]
-  end
+    def lookahead
+      return nil if @cursor >= @tokens.length
 
-  def consume_next
-    token = @tokens[@cursor]
-    @cursor += 1
+      # this *isn't* +1 because of zero-indexing
+      @tokens[@cursor]
+    end
 
-    token
+    def lookbehind
+      index = @cursor - 1
+      return nil if index < 0
+
+      @tokens[@cursor - 1]
+    end
+
+    def consume_next
+      token = @tokens[@cursor]
+      @cursor += 1
+
+      token
+    end
   end
 end

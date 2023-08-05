@@ -1,9 +1,9 @@
 require_relative "spec_helper"
 
-RSpec.describe Parser do
+RSpec.describe Slashdown::Parser do
   it "coerces blank tags to divs" do
-    tokens = [Token.new(:TAG, "", 0)]
-    tag_node = Parser.new(tokens).ast.first
+    tokens = [Slashdown::Token.new(:TAG, "", 0)]
+    tag_node = Slashdown::Parser.new(tokens).ast.first
 
     expect(tag_node.identifier).to eq("div")
   end
@@ -12,22 +12,22 @@ RSpec.describe Parser do
     let(:tokens) {
       # rubocop:disable Layout/ArrayAlignment
       [
-        Token.new(:TAG, "section", 0), Token.new(:ATTRIBUTE, "foo='bar'", 0),
-          Token.new(:TAG, "h1", 1),
-            Token.new(:TEXT, "Hello World!", 2),
-          Token.new(:MARKDOWN, "This is content", 1),
-          Token.new(:BLANK, nil, nil),
-          Token.new(:MARKDOWN, "This is more content", 1),
-          Token.new(:TAG, "a", 1),
-            Token.new(:ATTRIBUTE, "href='http://example.com'", 2),
-            Token.new(:TEXT, "Click here", 2),
-        Token.new(:TAG, "footer", 0),
-          Token.new(:TEXT, "Goodnight Moon.", 1)
+        Slashdown::Token.new(:TAG, "section", 0), Slashdown::Token.new(:ATTRIBUTE, "foo='bar'", 0),
+          Slashdown::Token.new(:TAG, "h1", 1),
+            Slashdown::Token.new(:TEXT, "Hello World!", 2),
+          Slashdown::Token.new(:MARKDOWN, "This is content", 1),
+          Slashdown::Token.new(:BLANK, nil, nil),
+          Slashdown::Token.new(:MARKDOWN, "This is more content", 1),
+          Slashdown::Token.new(:TAG, "a", 1),
+            Slashdown::Token.new(:ATTRIBUTE, "href='http://example.com'", 2),
+            Slashdown::Token.new(:TEXT, "Click here", 2),
+        Slashdown::Token.new(:TAG, "footer", 0),
+          Slashdown::Token.new(:TEXT, "Goodnight Moon.", 1)
       ]
       # rubocop:enable Layout/ArrayAlignment
     }
 
-    let(:ast) { Parser.new(tokens).ast }
+    let(:ast) { Slashdown::Parser.new(tokens).ast }
 
     it "correctly manages hierarchy and children" do
       expect(ast.length).to be(2)
