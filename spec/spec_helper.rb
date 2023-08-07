@@ -12,7 +12,7 @@ end
 
 require "awesome_print"
 
-require_relative "../lib/lexer"
+require_relative "../lib/slashdown"
 require_relative "../lib/parser"
 require_relative "../lib/renderer"
 require_relative "../lib/token"

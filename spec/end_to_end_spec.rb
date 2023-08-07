@@ -1,7 +1,7 @@
 require_relative "spec_helper"
 require "nokogiri"
 
-RSpec.describe "Slashdown compiler" do
+RSpec.describe Slashdown do
   let(:src) { File.read("spec/fixtures/example.sd") }
   let(:expected_html) { File.read("spec/fixtures/expected.html") }
 

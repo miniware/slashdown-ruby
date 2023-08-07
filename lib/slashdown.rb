@@ -4,7 +4,7 @@ require_relative "renderer"
 
 module Slashdown
   class TemplateRenderer
-    def self.render(src, context)
+    def self.render(src, context = {})
       # Replace variables in the src
       context.each do |key, value|
         src.gsub!("{{#{key}}}", value.to_s)
